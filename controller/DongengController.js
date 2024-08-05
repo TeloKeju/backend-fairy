@@ -12,6 +12,22 @@ export const getDongeng = async (req, res) => {
         return res.status(401).json({ message: err.message });
     }
 }
+
+export const sumView = async (req, res) => {
+    const { id } = req.params
+    try {
+        const raw = await Dongeng.findOne({
+            where: { id }
+        });
+
+        raw.update({ view: raw.view + 1 })
+        return res.status(200).json({ message: "Berhasil menambah view" })
+    } catch (err) {
+        return res.status(500).json({ message: err.message })
+    }
+
+}
+
 export const getDongengById = async (req, res) => {
     try {
         const response = await Dongeng.findOne({
@@ -117,16 +133,15 @@ export const updateDongeng = async (req, res) => {
         return res.status(404).json({ message: "Dongeng tidak ditemukan" })
     }
 
-    const file = req.files.file
     let fileName = null
-    if (file === null) {
+    if (!req.files) {
         fileName = item.fileName
         await item.update({
             title: req.body.title,
         })
         res.status(200).json({ message: "Dongeng Berhasil diperbarui" })
     } else {
-
+        const file = req.files.file
         const ext = path.extname(file.name)
         const fileNamed = new Date().toISOString().replace(/[-:.]/g, '')
         fileName = fileNamed + ext;

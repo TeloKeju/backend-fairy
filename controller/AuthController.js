@@ -2,12 +2,11 @@ import User from '../Models/UserModel.js';
 import { loginModel } from '../Models/UserModel.js';
 import bcrypt from 'bcrypt';
 import jwt from "jsonwebtoken"
+import { transporter } from '../config/EmailSender.js';
 
 
 export const register = async (req, res) => {
     const { nama, email, password, confirmPassword } = req.body
-
-
     let result = {
 
         email: {
@@ -37,6 +36,24 @@ export const register = async (req, res) => {
     } catch (e) {
         res.status(500).json(e.message)
     }
+}
+
+export const forgotPassword = (req, res) => {
+    const { email } = req.body
+    let mailOptions = {
+        from: 'pbsiproyek@gmail.com',
+        to: email,
+        subject: 'Test Email dari Nodemailer',
+        text: 'Ini adalah email test yang dikirim menggunakan Nodemailer!'
+    };
+
+    transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+            console.log('Error:', error);
+        } else {
+            console.log('Email terkirim: ' + info.response);
+        }
+    });
 }
 
 export const isAvailableEmail = async (req, res) => {

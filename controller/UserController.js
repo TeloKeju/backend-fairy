@@ -19,9 +19,9 @@ export const getUserByID = async (req, res) => {
                 id: req.params.id
             }
         })
-        res.status(200).json(response)
+        return res.status(200).json(response)
     } catch (error) {
-        res.status(500).json({ msg: error.message })
+        return res.status(500).json({ msg: error.message })
     }
 }
 
