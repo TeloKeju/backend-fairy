@@ -10,6 +10,9 @@ const User = db.define("users",
         "nama": DataTypes.STRING,
         "email": DataTypes.STRING,
         "password": DataTypes.STRING,
+        "role": DataTypes.STRING,
+        "isActive": DataTypes.STRING,
+        "resetPassword": DataTypes.STRING,
     },
     { freezeTableName: true }
 )

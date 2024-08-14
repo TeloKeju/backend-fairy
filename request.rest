@@ -36,14 +36,12 @@
 #     "confirmPassword": "asdasdasd"
 # }
 
-POST http://localhost:5000/api/login
+GET http://localhost:5000/api/profile/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIsImlhdCI6MTcyMzQ3ODM1NywiZXhwIjoxNzIzNDc4NDE3fQ.Dw46-FYQ0Ke6yDyDuhQifQFdScE2Bi9cYpz7wEo1kko
 Content-Type: application/json
 
-{
-    "email": "alusngpwd@gmail.com",
-    "password": "asdasdasd"
-}
 
+# $2b$10$bw89PAvgoVSCCThxxiLm4OwqakZrJT7KsIlFvDi03YhDtYrsbl6he
+# $2b$10$yPBITrUnWnniAi9TnBvS.uJvh3HWCPNDzK0oayCRf1TyLhc4oELTm
 # POST http://localhost:5000/api/dongeng
 # Content-Type: multipart/form-data
 

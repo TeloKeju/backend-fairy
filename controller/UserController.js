@@ -1,5 +1,7 @@
 import User from '../Models/UserModel.js';
 import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken";
+
 
 export const getUser = async (req, res) => {
     try {
@@ -10,7 +12,17 @@ export const getUser = async (req, res) => {
     }
 }
 
+export const profile = async (req, res) => {
+    const { token } = req.params
+    const { id } = jwt.verify(token, process.env.JWT_SECRET)
+    const user = await User.findOne({
+        where: {
+            id
+        }
+    })
+    return res.status(200).json(user)
 
+}
 
 export const getUserByID = async (req, res) => {
     try {
@@ -69,7 +81,6 @@ export const updateUser = async (req, res) => {
 
 export const deleteUser = async (req, res) => {
     try {
-        console.log(req.params.id)
         await User.destroy({
             where: {
                 id: req.params.id
@@ -79,5 +90,5 @@ export const deleteUser = async (req, res) => {
     } catch (error) {
         console.log(error);
     }
-
 }
+
