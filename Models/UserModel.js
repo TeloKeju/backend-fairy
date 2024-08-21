@@ -1,7 +1,5 @@
 import { Sequelize } from "sequelize";
 import db from "../config/Database.js";
-import validator from "validator";
-import bcrypt from 'bcrypt';
 
 const { DataTypes } = Sequelize;
 
@@ -12,7 +10,6 @@ const User = db.define("users",
         "password": DataTypes.STRING,
         "role": DataTypes.STRING,
         "isActive": DataTypes.STRING,
-        "resetPassword": DataTypes.STRING,
     },
     { freezeTableName: true }
 )
@@ -32,7 +29,6 @@ const loginModel = async (email, password) => {
         },
         status: (count === 0)
     }
-    // console.log(rows)
 
     return credentials
 }

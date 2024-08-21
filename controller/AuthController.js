@@ -4,8 +4,37 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { transporter } from "../config/EmailSender.js";
 
+export const validJWT = (req, res) => {
+    try {
+        const { token } = req.params;
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const dateNow = new Date().getTime() / 1000
+        if (dateNow >= decoded.exp)
+            return res.status(410).json({ status: false });
+        return res.status(200).json({ status: true });
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+}
+
+export const verify = async (req, res) => {
+    const { token } = req.query
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    console.log(token)
+    const dateNow = new Date().getTime() / 1000
+    if (dateNow >= decoded.exp)
+        return res.status(410).json({ message: "verify is expired" });
+    try {
+        await User.update({ isActive: true }, { where: { id: decoded.id } })
+        return res.status(200).json({ message: "berhasil mengaktivasi akun!" })
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+
+}
+
 export const register = async (req, res) => {
-    const { nama, email, password, confirmPassword } = req.body;
+    const { nama, email, password } = req.body;
     let result = {
         email: {
             value: email,
@@ -19,14 +48,23 @@ export const register = async (req, res) => {
                 email: email,
             },
         });
-        console.log(nama);
         if (uniqueEmail) {
             result.email.message = "Email sudah terdaftar!";
             return res.status(200).json(result);
         }
+
         const salt = await bcrypt.genSalt();
         const hashPassword = await bcrypt.hash(password, salt);
+
         await User.create({ nama, email, password: hashPassword });
+
+        const user = await User.findOne({ where: { nama, email } })
+        const payload = {
+            id: user.id,
+            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60),
+        };
+        const token = jwt.sign(payload, process.env.JWT_SECRET);
+        const link = `${process.env.API_CLIENT}/verify?token=${token}`;
 
         let mailOptions = {
             from: "yosanokta12@gmail.com",
@@ -106,7 +144,7 @@ export const register = async (req, res) => {
                                 <p>Terima kasih telah mendaftar di <strong>[Nama Perusahaan/Organisasi]</strong>. Untuk mengaktifkan akun Anda, kami perlu memverifikasi alamat email Anda.</p>
                                 <p>Silakan klik tautan di bawah ini untuk memverifikasi email Anda:</p>
                                 <div class="button">
-                                    <a href="#">Verifikasi Email</a>
+                                    <a href="${link}">Verifikasi Email</a>
                                 </div>
                                 <p>Jika Anda tidak melakukan pendaftaran ini, Anda dapat mengabaikan email ini.</p>
                                 <p>Tautan ini akan berlaku selama 24 jam.</p>
@@ -137,24 +175,21 @@ export const register = async (req, res) => {
     }
 };
 
-function generateRandomCode(length) {
-    let characters =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let result = "";
-    let charactersLength = characters.length;
-    for (let i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-    return result;
-}
 
-export const forgotPassword = async (req, res) => {
+export const forgotPasswordSend = async (req, res) => {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ where: { email } });
 
     if (!user) {
         return res.status(400).json({ message: 'Email tidak ditemukan' });
     }
+
+    const payload = {
+        id: user.id,
+        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60),
+    };
+    const token = jwt.sign(payload, process.env.JWT_SECRET);
+    const link = `${process.env.API_CLIENT}/forgot-password?token=${token}`;
 
 
 
@@ -236,7 +271,7 @@ export const forgotPassword = async (req, res) => {
                     <p>Kami menerima permintaan untuk mengatur ulang password akun Anda. Jika Anda tidak melakukan permintaan ini, silakan abaikan email ini.</p>
                     <p>Untuk mengatur ulang password Anda, silakan klik tautan di bawah ini:</p>
                     <div class="button">
-                        <a href="${env.process.API_CLIENT}/${token}">Reset Password</a>
+                        <a href="${link}">Reset Password</a>
                     </div>
                     <p>Tautan ini akan berlaku selama 24 jam. Setelah itu, Anda perlu mengajukan permintaan reset password lagi.</p>
                     <p>Jika Anda mengalami kesulitan atau memiliki pertanyaan, jangan ragu untuk menghubungi tim dukungan kami.</p>
@@ -392,22 +427,18 @@ export const refreshNewToken = (req, res) => {
 };
 
 export const forgotPasswordForm = async (req, res) => {
-    const { password } = req.body
-    const { id } = req.params
+    const { newPassword } = req.body
+    const { token } = req.params
+    const { id } = jwt.verify(token, process.env.JWT_SECRET);
 
     console.log(id)
-
-
     try {
         const salt = await bcrypt.genSalt();
-        const hashPassword = await bcrypt.hash(password, salt)
-        const result = await User.update({ password: hashPassword }, { where: { id } })
-
-        console.log(await User.findOne({ where: { id } }))
+        const hashPassword = await bcrypt.hash(newPassword, salt)
+        await User.update({ password: hashPassword }, { where: { id } })
         return res.status(200).json({ message: "Berhasil mengganti password" })
-
     } catch (error) {
-        res.status(500).json({ message: error.message })
+        return res.status(500).json({ message: error.message })
     }
 
 
