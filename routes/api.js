@@ -24,6 +24,7 @@ router.get("/api/dongeng", getDongeng);
 router.patch("/api/dongeng/:id", accessValidation, updateDongeng);
 router.get("/api/dongeng/:id", getDongengById);
 router.get("/api/dongengview/:id", sumView)
+router.get("/api/popular")
 
 router.post("/api/login", login)
 router.post("/api/logout", logout)
