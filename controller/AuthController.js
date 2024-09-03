@@ -3,75 +3,107 @@ import { loginModel } from "../Models/UserModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { transporter } from "../config/EmailSender.js";
+import { env } from "process";
 
+export const updateProfile = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { id } = jwt.verify(token, process.env.JWT_SECRET);
+    await User.update(req.body, { where: { id } });
+    return res.status(200).json({ message: "Berhasil mengupdate profile" });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
 export const validJWT = (req, res) => {
-    try {
-        const { token } = req.params;
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const dateNow = new Date().getTime() / 1000
-        if (dateNow >= decoded.exp)
-            return res.status(410).json({ status: false });
-        return res.status(200).json({ status: true });
-    } catch (error) {
-        return res.status(500).json({ message: error.message })
-    }
-}
+  try {
+    const { token } = req.params;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const dateNow = new Date().getTime() / 1000;
+    if (dateNow >= decoded.exp) return res.status(410).json({ status: false });
+    return res.status(200).json({ status: true });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const isAvailableUsername = async (req, res) => {
+  try {
+    const result = await User.findAll({
+      where: {
+        username: req.query.search,
+      },
+    });
+    return res
+      .status(200)
+      .json({ isAvailable: result.length > 0 ? false : true });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
 
 export const verify = async (req, res) => {
-    const { token } = req.query
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    console.log(token)
-    const dateNow = new Date().getTime() / 1000
-    if (dateNow >= decoded.exp)
-        return res.status(410).json({ message: "verify is expired" });
-    try {
-        await User.update({ isActive: true }, { where: { id: decoded.id } })
-        return res.status(200).json({ message: "berhasil mengaktivasi akun!" })
-    } catch (error) {
-        return res.status(500).json({ message: error.message })
-    }
-
-}
+  const { token } = req.query;
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  console.log(token);
+  const dateNow = new Date().getTime() / 1000;
+  if (dateNow >= decoded.exp)
+    return res.status(410).json({ message: "verify is expired" });
+  try {
+    await User.update({ isActive: true }, { where: { id: decoded.id } });
+    return res.status(200).json({ message: "berhasil mengaktivasi akun!" });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
 
 export const register = async (req, res) => {
-    const { nama, email, password } = req.body;
-    let result = {
-        email: {
-            value: email,
-            message: null,
-        },
+  const { nama, username, email, password } = req.body;
+  let result = {
+    email: {
+      value: email,
+      message: null,
+    },
+  };
+
+  try {
+    const uniqueEmail = await User.findOne({
+      where: {
+        email: email,
+      },
+    });
+    if (uniqueEmail) {
+      result.email.message = "Email sudah terdaftar!";
+      return res.status(200).json(result);
+    }
+
+    const salt = await bcrypt.genSalt();
+    const hashPassword = await bcrypt.hash(password, salt);
+
+    const refreshToken = jwt.sign(nama, env.JWT_REFRESH_SECRET);
+
+    await User.create({
+      nama,
+      username,
+      email,
+      password: hashPassword,
+      refreshToken,
+    });
+
+    const user = await User.findOne({ where: { nama, email } });
+    const payload = {
+      id: user.id,
+      exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60,
     };
+    const token = jwt.sign(payload, process.env.JWT_SECRET);
+    const link = `${process.env.API_CLIENT}/verify?token=${token}`;
 
-    try {
-        const uniqueEmail = await User.findOne({
-            where: {
-                email: email,
-            },
-        });
-        if (uniqueEmail) {
-            result.email.message = "Email sudah terdaftar!";
-            return res.status(200).json(result);
-        }
-
-        const salt = await bcrypt.genSalt();
-        const hashPassword = await bcrypt.hash(password, salt);
-
-        await User.create({ nama, email, password: hashPassword });
-
-        const user = await User.findOne({ where: { nama, email } })
-        const payload = {
-            id: user.id,
-            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60),
-        };
-        const token = jwt.sign(payload, process.env.JWT_SECRET);
-        const link = `${process.env.API_CLIENT}/verify?token=${token}`;
-
-        let mailOptions = {
-            from: "yosanokta12@gmail.com",
-            to: email,
-            subject: "Verifikasi Email",
-            text: "Verifikasi Email!",
-            html: `
+    let mailOptions = {
+      from: "yosanokta12@gmail.com",
+      to: email,
+      subject: "Verifikasi Email",
+      text: "Verifikasi Email!",
+      html: `
             <!DOCTYPE html>
                 <html lang="id">
                     <head>
@@ -158,47 +190,44 @@ export const register = async (req, res) => {
                         </div>
                     </body>
                 </html>`,
-        };
+    };
 
-        transporter.sendMail(mailOptions, function (error, info) {
-            if (error) {
-                console.log("Error:", error);
-            } else {
-                console.log("Email terkirim: " + info.response);
-                res.status(200).json(randomCode);
-            }
-        });
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.log("Error:", error);
+      } else {
+        console.log("Email terkirim: " + info.response);
+        res.status(200).json(randomCode);
+      }
+    });
 
-        res.status(200).json(result);
-    } catch (e) {
-        res.status(500).json(e.message);
-    }
+    res.status(200).json(result);
+  } catch (e) {
+    res.status(500).json(e.message);
+  }
 };
 
-
 export const forgotPasswordSend = async (req, res) => {
-    const { email } = req.body;
-    const user = await User.findOne({ where: { email } });
+  const { email } = req.body;
+  const user = await User.findOne({ where: { email } });
 
-    if (!user) {
-        return res.status(400).json({ message: 'Email tidak ditemukan' });
-    }
+  if (!user) {
+    return res.status(400).json({ message: "Email tidak ditemukan" });
+  }
 
-    const payload = {
-        id: user.id,
-        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60),
-    };
-    const token = jwt.sign(payload, process.env.JWT_SECRET);
-    const link = `${process.env.API_CLIENT}/forgot-password?token=${token}`;
+  const payload = {
+    id: user.id,
+    exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60,
+  };
+  const token = jwt.sign(payload, process.env.JWT_SECRET);
+  const link = `${process.env.API_CLIENT}/forgot-password?token=${token}`;
 
-
-
-    let mailOptions = {
-        from: "yosanokta12@gmail.com",
-        to: email,
-        subject: "Forgot Password",
-        text: "Forgot Password!",
-        html: `
+  let mailOptions = {
+    from: "yosanokta12@gmail.com",
+    to: email,
+    subject: "Forgot Password",
+    text: "Forgot Password!",
+    html: `
         <!DOCTYPE html>
         <html lang="id">
         <head>
@@ -284,162 +313,178 @@ export const forgotPasswordSend = async (req, res) => {
             </div>
         </body>
         </html>`,
-    };
+  };
 
-    transporter.sendMail(mailOptions, function (error, info) {
-        if (error) {
-            console.log("Error:", error);
-        } else {
-            console.log("Email terkirim: " + info.response);
-            res.status(200).json(randomCode);
-        }
-    });
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      console.log("Error:", error);
+    } else {
+      console.log("Email terkirim: " + info.response);
+      res.status(200).json(randomCode);
+    }
+  });
 };
 
 export const isAvailableEmail = async (req, res) => {
-    try {
-        const result = await User.findAll({
-            where: {
-                email: req.query.search,
-            },
-        });
-        return res
-            .status(200)
-            .json({ isAvailable: result.length > 0 ? false : true });
-    } catch (error) {
-        return res.status(500).json({ message: error.message });
-    }
+  try {
+    const result = await User.findAll({
+      where: {
+        email: req.query.search,
+      },
+    });
+    return res
+      .status(200)
+      .json({ isAvailable: result.length > 0 ? false : true });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
 };
 
 export const checkEmail = async (req, res) => {
-    try {
-        const result = await User.findAll({
-            where: {
-                email: req.query.search,
-            },
-        });
-        console.log(result);
-        return res
-            .status(200)
-            .json({ checkEmailExists: result.length > 0 ? true : false });
-    } catch (error) {
-        return res.status(500).json({ message: error.message });
-    }
+  try {
+    const result = await User.findAll({
+      where: {
+        email: req.query.search,
+      },
+    });
+    console.log(result);
+    return res
+      .status(200)
+      .json({ checkEmailExists: result.length > 0 ? true : false });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
 };
 
 let refreshToken = [];
 
 export const login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const account = await User.findOne({ where: { email } });
-        if (!account) {
-            return res
-                .status(401)
-                .json({ message: "Email atau password salah!", status: false });
-        }
-        const passwordValidate = await bcrypt.compare(password, account.password);
-        if (!passwordValidate) {
-            return res
-                .status(401)
-                .json({ message: "Email atau password salah!pass", status: false });
-        }
-        // result.status = (bcrypt.compare(password, account.password, (err, result) => result))
-        const payload = {
-            id: account.id,
-            nama: account.nama,
-            email: account.email,
-        };
+  const { credential, password } = req.body;
+  let payload = {};
+  try {
+    const email = await User.findOne({ where: { email: credential } });
+    const username = await User.findOne({ where: { username: credential } });
 
-        let refreshTokenUsers = getRefreshToken(payload);
-        refreshToken.push(refreshTokenUsers);
-
-        return res.status(200).json({
-            data: {
-                id: payload.id,
-                nama: payload.nama,
-                email: payload.email,
-                status: true,
-            },
-            token: {
-                accessToken: getAccessToken(payload),
-                refreshToken: refreshTokenUsers,
-            },
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    if (email) {
+      const passwordValidateEmail = await bcrypt.compare(
+        password,
+        email.password
+      );
+      if (!passwordValidateEmail) {
+        return res
+          .status(401)
+          .json({ message: "Email atau password salah!pass", status: false });
+      }
+      payload = {
+        id: email.id,
+        role: email.role,
+        refreshToken: email.refreshToken,
+      };
+    } else if (username) {
+      const passwordValidateUsername = await bcrypt.compare(
+        password,
+        username.password
+      );
+      if (!passwordValidateUsername) {
+        return res
+          .status(401)
+          .json({ message: "Email atau password salah!pass", status: false });
+      }
+      payload = {
+        id: username.id,
+        role: username.role,
+        refreshToken: email.refreshToken,
+      };
+    } else {
+      return res.status(401).json({
+        message: "Email atau password salah! Username/pass",
+        status: false,
+      });
     }
+
+    return res.status(200).json({
+      data: {
+        id: payload.id,
+        status: true,
+      },
+      token: {
+        accessToken: getAccessToken(payload),
+        refreshToken: payload.refreshToken,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 function getAccessToken(user) {
-    return jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-        expiresIn: "1m",
-    });
+  return jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+    expiresIn: "1m",
+  });
 }
-function getRefreshToken(user) {
-    return jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, {
-        expiresIn: "7d",
+
+async function getRefreshToken(id) {
+  try {
+    const res = await User.findOne({
+      where: {
+        id: id,
+      },
     });
-}
+    console.log(res.refreshToken);
+  } catch (error) {
+    console.log(error);
+  }
+} // gng kangge
 
 export const logout = async (req, res) => {
-    refreshToken.filter((item) => item !== req.body.refreshToken);
-    return res.status(200).json({ status: true });
+  return res.status(200).json({ status: true });
 };
 
-
 export const authenticationToken = (req, res, next) => {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
-    if (token == null) return res.sendStatus(401);
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-        if (err) return res.sendStatus(403);
-        req.user = user;
-        next();
-    });
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  console.log(token);
+  if (token == null) return res.sendStatus(401);
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
 };
 
 export const testAuthToken = (req, res) => {
-    return res.status(200).json({ status: true });
+  return res.status(200).json({ status: true });
 };
 
 export const refreshNewToken = (req, res) => {
-    const refreshToken_user = req.body.refreshToken;
-    if (!refreshToken_user) {
-        return res.sendStatus(401);
-    } else if (!refreshToken_user in refreshToken) {
-        return res.sendStatus(403);
-    } else {
-        jwt.verify(
-            refreshToken_user,
-            process.env.JWT_REFRESH_SECRET,
-            (err, user) => {
-                if (err) return res.sendStatus(403);
-                const accessToken = getAccessToken({ id: user.id });
-                const refreshToken_new = getRefreshToken({ id: user.id });
-                refreshToken.push(refreshToken_new);
-                return res
-                    .status(200)
-                    .json({ accessToken: accessToken, refreshToken: refreshToken_new });
-            }
-        );
-    }
+  const refreshToken_user = req.body.refreshToken;
+  if (!refreshToken_user) {
+    return res.sendStatus(401);
+  } else {
+    jwt.verify(
+      refreshToken_user,
+      process.env.JWT_REFRESH_SECRET,
+      (err, user) => {
+        if (err) return res.sendStatus(403);
+        const accessToken = getAccessToken({ id: user.id });
+        return res.status(200).json({ accessToken: accessToken });
+      }
+    );
+  }
 };
 
 export const forgotPasswordForm = async (req, res) => {
-    const { newPassword } = req.body
-    const { token } = req.params
-    const { id } = jwt.verify(token, process.env.JWT_SECRET);
+  const { newPassword } = req.body;
+  const { token } = req.params;
+  const { id } = jwt.verify(token, process.env.JWT_SECRET);
 
-    console.log(id)
-    try {
-        const salt = await bcrypt.genSalt();
-        const hashPassword = await bcrypt.hash(newPassword, salt)
-        await User.update({ password: hashPassword }, { where: { id } })
-        return res.status(200).json({ message: "Berhasil mengganti password" })
-    } catch (error) {
-        return res.status(500).json({ message: error.message })
-    }
-
-
-}
+  console.log(id);
+  try {
+    const salt = await bcrypt.genSalt();
+    const hashPassword = await bcrypt.hash(newPassword, salt);
+    await User.update({ password: hashPassword }, { where: { id } });
+    return res.status(200).json({ message: "Berhasil mengganti password" });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};

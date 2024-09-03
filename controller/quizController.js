@@ -45,7 +45,7 @@ export const getAllQuiz = async (req, res) => {
 
     res.status(200).json(response);
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -64,7 +64,7 @@ export const createQuiz = async (req, res) => {
     });
     res.status(201).json({ message: "Quiz Created" });
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -73,7 +73,7 @@ export const deleteQuiz = async (req, res) => {
     await ForumQuiz.destroy({ where: { id: req.params.id } });
     res.status(200).json({ message: "Quiz Deleted" });
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -92,7 +92,7 @@ export const updateQuiz = async (req, res) => {
     await item.save();
     res.status(200).json({ message: "Quiz Updated" });
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -126,6 +126,6 @@ export const getQuizById = async (req, res) => {
 
     res.status(200).json(response);
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };

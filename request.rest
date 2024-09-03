@@ -1,13 +1,12 @@
-# POST  http://localhost:5000/api/users
+# POST  http://localhost:5000/api/login
 # Content-Type: application/json
 
 # {
-#     "nama": "alung",
-#     "email": "alungpasdasdasd@gmail.com",
-#     "password": "asdasdasd"
+#     "credential": "pepepe",
+#     "password": "Alung01042003#1"
 # }
 
-# GET http://localhost:5000/api/users
+GET http://localhost:5000/api/count/view
 # Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTUsIm5hbWEiOiJzdW4gZ29kIG5pYSIsImVtYWlsIjoiYWx1c25ncHdkQGdtYWlsLmNvbSIsImlhdCI6MTcyMDQzMTIxMCwiZXhwIjoxNzIwNDM4NDEwfQ.n9GwbXTdOxaP-u9IPMdCVCrdkidhc_x9iKWWd6ODxow
 
 

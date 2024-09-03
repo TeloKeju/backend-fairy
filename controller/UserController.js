@@ -13,6 +13,7 @@ export const getUser = async (req, res) => {
 }
 
 export const profile = async (req, res) => {
+    // req.params
     const { token } = req.params
     const { id } = jwt.verify(token, process.env.JWT_SECRET)
     const user = await User.findOne({
@@ -38,21 +39,17 @@ export const getUserByID = async (req, res) => {
 }
 
 export const createUser = async (req, res) => {
+    const uniqueEmail = await User.findOne({ where: { email: req.body.email } })
+
+    if (uniqueEmail) {
+        return res.status(400).json({ email: "Email sudah di gunakan!" })
+    }
     try {
-        const { nama, email, password } = req.body
-        const uniqueEmail = await User.findOne({ where: { email } })
-
-        if (uniqueEmail) {
-            return res.status(400).json({ email: "Email sudah di gunakan!" })
-        }
-
         const salt = await bcrypt.genSalt();
-        const hashPassword = await bcrypt.hash(password, salt)
-        await User.create({
-            nama,
-            email,
-            password: hashPassword
-        })
+        const hashPassword = await bcrypt.hash(req.body.password, salt)
+        req.body.password = hashPassword
+        await User.create(req.body)
+        console.log("UNINNININ")
         return res.status(200).json({ message: "User berhasil dibuat!" })
     } catch (err) {
         return res.status(500).json({ message: err.message })
@@ -64,14 +61,18 @@ export const updateUser = async (req, res) => {
 
     try {
         if (req.body.password) {
-            const { nama, email, password } = req.body
+            // const { nama, email, password } = req.body
             const salt = await bcrypt.genSalt();
+            const password = req.body.password
             const hashPassword = await bcrypt.hash(password, salt)
-            const result = await User.update({ nama, email, hashPassword }, { where: { id: req.params.id } })
+
+            req.body.password = hashPassword
+
+            const result = await User.update(req.body, { where: { id: req.params.id } })
             res.status(200).json({ message: "User Berhasil di update" })
         } else {
-            const { nama, email } = req.body
-            const result = await User.update({ nama }, { where: { id: req.params.id } })
+
+            const result = await User.update(req.body, { where: { id: req.params.id } })
             res.status(200).json({ message: "User Berhasil di update" })
         }
     } catch (e) {

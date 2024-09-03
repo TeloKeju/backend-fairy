@@ -18,7 +18,7 @@ export const getSoalPilgan = async (req, res) => {
     });
     res.status(200).json(response);
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -38,7 +38,7 @@ export const createSoalPilgan = async (req, res) => {
     });
     res.status(201).json({ message: "Soal Pilihan Ganda Created" });
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -47,7 +47,7 @@ export const deleteSoalPilgan = async (req, res) => {
     await SoalPilgan.destroy({ where: { id: req.params.id } });
     res.status(200).json({ message: "Soal Pilihan Ganda Deleted" });
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -69,7 +69,7 @@ export const updateSoalPilgan = async (req, res) => {
     await item.save();
     res.status(200).json({ message: "Soal Pilihan Ganda Updated" });
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -85,7 +85,7 @@ export const getSoalUraianPanjang = async (req, res) => {
     });
     res.status(200).json(response);
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -100,7 +100,7 @@ export const createSoalUraianPanjang = async (req, res) => {
     });
     res.status(201).json({ message: "Soal Uraian Panjang Created" });
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -109,7 +109,7 @@ export const deleteSoalUraianPanjang = async (req, res) => {
     await SoalUraianPanjang.destroy({ where: { id: req.params.id } });
     res.status(200).json({ message: "Soal Uraian Panjang Deleted" });
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -128,7 +128,7 @@ export const updateSoalUraianPanjang = async (req, res) => {
     await item.save();
     res.status(200).json({ message: "Soal Uraian Panjang Updated" });
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -144,7 +144,7 @@ export const getSoalUraianSingkat = async (req, res) => {
     });
     res.status(200).json(response);
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -159,7 +159,7 @@ export const createSoalUraianSingkat = async (req, res) => {
     });
     res.status(201).json({ message: "Soal Uraian Singkat Created" });
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -168,7 +168,7 @@ export const deleteSoalUraianSingkat = async (req, res) => {
     await SoalUraianSingkat.destroy({ where: { id: req.params.id } });
     res.status(200).json({ message: "Soal Uraian Singkat Deleted" });
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -187,6 +187,6 @@ export const updateSoalUraianSingkat = async (req, res) => {
     await item.save();
     res.status(200).json({ message: "Soal Uraian Singkat Updated" });
   } catch (err) {
-    return res.status(401).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
