@@ -6,6 +6,7 @@ import accessValidation from "../middleware/authorization.js"
 import { createSoalPilgan, createSoalUraianPanjang, createSoalUraianSingkat, deleteSoalPilgan, deleteSoalUraianPanjang, deleteSoalUraianSingkat, getSoalPilgan, getSoalUraianPanjang, getSoalUraianSingkat, updateSoalPilgan, updateSoalUraianPanjang, updateSoalUraianSingkat } from "../controller/soalController.js"
 import { createQuiz, deleteQuiz, getAllQuiz, getQuizById, updateQuiz } from "../controller/quizController.js"
 import { getRekapByForumId } from "../controller/forumController.js"
+import { newVisited, getAllVisited } from "../controller/visitedController.js"
 
 const router = express.Router();
 
@@ -99,5 +100,8 @@ router.get("/api/get-quiz/:id", accessValidation, getQuizById);
 router.get("/api/get-rekap/:id_forum", getRekapByForumId)
 
 router.get("/api/test", authenticationToken, testAuthToken);
+
+router.get("/api/visited", newVisited)
+router.get("/api/visited/get", getAllVisited)
 
 export default router;
