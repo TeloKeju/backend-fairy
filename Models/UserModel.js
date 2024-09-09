@@ -15,6 +15,10 @@ const User = db.define("users",
             type: DataTypes.STRING,
             allowNull: true,
         },
+        "history": {
+            type: DataTypes.TEXT('long'),
+            allowNull: true,
+        },
         "sekolah": {
             type: DataTypes.STRING,
             allowNull: true

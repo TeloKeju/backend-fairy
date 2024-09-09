@@ -2,6 +2,37 @@ import User from '../Models/UserModel.js';
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken";
 
+export const getHistory = (req, res) => {
+
+}
+export const updateHistory = async (req, res) => {
+    const id = 9
+    const book = 1
+    const user = await User.findOne(
+        {
+            where: { id },
+            attributes: ["history"]
+        },
+    )
+    console.log(user.history)
+
+    let history = user.history.split(" ")
+    history.filter((histo) => { return histo != book })
+    history.push(book)
+
+    let result = ""
+    history.map((item) => result += ` ${item}`)
+    // user.history = result
+    console.log(result)
+
+    await User.update({ history: result }, {
+        where: {
+            id,
+        },
+    },);
+
+    return res.status(200).json({ message: "berhasil update history" })
+}
 
 export const getUser = async (req, res) => {
     try {

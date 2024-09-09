@@ -1,5 +1,6 @@
 import Dongeng from "../Models/DongengModel.js";
 import ForumQuiz from "../Models/forumQuizModel.js";
+import RekapNilaiModel from "../Models/rekapNilai.js";
 import SoalPilgan, {
   SoalUraianPanjang,
   SoalUraianSingkat,
@@ -71,6 +72,7 @@ export const createQuiz = async (req, res) => {
 export const deleteQuiz = async (req, res) => {
   try {
     await ForumQuiz.destroy({ where: { id: req.params.id } });
+    await RekapNilaiModel.destroy({ where: { id_Forum: req.params.id } });
     res.status(200).json({ message: "Quiz Deleted" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
