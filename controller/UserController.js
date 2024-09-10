@@ -14,14 +14,13 @@ export const updateHistory = async (req, res) => {
             attributes: ["history"]
         },
     )
-    console.log(user.history)
 
-    let history = user.history.split(" ")
-    history.filter((histo) => { return histo != book })
+    let history = user.history.split("|")
+    history.filter((histo) => { return histo != book.toString() })
     history.push(book)
 
     let result = ""
-    history.map((item) => result += ` ${item}`)
+    history.map((item) => result += `|${item}`)
     // user.history = result
     console.log(result)
 

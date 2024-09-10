@@ -1,3 +1,4 @@
+import Dongeng from "../Models/DongengModel.js";
 import ForumQuiz from "../Models/forumQuizModel.js";
 import RekapNilaiModel from "../Models/rekapNilai.js";
 import User from "../Models/UserModel.js";
@@ -40,13 +41,23 @@ export const joinForumByToken = async (req, res) => {
     });
 
     if (!result) {
-      return res.status(500).json({ message: "Invalid token" });
+      return res.status(400).json({ message: "Invalid token" });
     } else if (result.id_User == req.body.id_user) {
-      return res.status(500).json({ message: "Already joined" });
+      return res.status(400).json({ message: "Already joined" });
     } else if (new Date(result.expired_date) < date) {
-      return res.status(500).json({ message: "Token expired" });
+      return res.status(400).json({ message: "Token expired" });
     } else if (new Date(result.access_date) > date) {
-      return res.status(500).json({ message: "Token not yet available" });
+      return res.status(400).json({ message: "Token not yet available" });
+    }
+
+    const checkJoinedStatus = await RekapNilaiModel.findOne({
+      where: {
+        id_User: req.body.id_user,
+        id_Forum: result.id,
+      },
+    });
+    if (checkJoinedStatus) {
+      return res.status(400).json({ message: "Already joined" });
     }
 
     await RekapNilaiModel.create({
@@ -56,8 +67,11 @@ export const joinForumByToken = async (req, res) => {
       nilai: 0,
     });
 
-    return res.status(200).json({ message: "Success join forum", data: result });
+    return res
+      .status(200)
+      .json({ message: "Success join forum", data: result });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({ error: error.message });
   }
 };
@@ -66,8 +80,7 @@ export const updateNilaiQuiz = async (req, res) => {
   try {
     const result = await RekapNilaiModel.findOne({
       where: {
-        id_User: req.body.id_user,
-        id_Forum: req.body.id_forum,
+        id: req.body.id,
       },
     });
     result.nilai = req.body.nilai;
@@ -78,4 +91,48 @@ export const updateNilaiQuiz = async (req, res) => {
   }
 };
 
-console.log(date.getFullYear());
+export const getQuizByUserId = async (req, res) => {
+  try {
+    const result = await RekapNilaiModel.findAll({
+      include: [
+        {
+          model: User,
+          as: "user",
+          required: true,
+        },
+        {
+          model: ForumQuiz,
+          as: "forumQuiz",
+          required: true,
+          include: [
+            {
+              model: Dongeng,
+              as: "dongeng",
+              required: true,
+            },
+          ],
+        },
+      ],
+      where: {
+        id_User: req.params.id_user,
+      },
+    });
+    return res.status(200).json(result);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+export const getRekapById = async (req, res) => {
+  try {
+    const result = await RekapNilaiModel.findOne({
+      where: {
+        id: req.params.id,
+      },
+    });
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};

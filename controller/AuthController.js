@@ -366,10 +366,17 @@ export const login = async (req, res) => {
     const username = await User.findOne({ where: { username: credential } });
 
     if (email) {
+
+      if (email.isActive != 1) {
+        return res
+          .status(401)
+          .json({ message: "Email atau password salah!", status: false });
+      }
       const passwordValidateEmail = await bcrypt.compare(
         password,
         email.password
       );
+
       if (!passwordValidateEmail) {
         return res
           .status(401)
@@ -385,16 +392,25 @@ export const login = async (req, res) => {
         password,
         username.password
       );
+
+      if (username.isActive != 1) {
+        return res
+          .status(401)
+          .json({ message: "Email atau password salah!", status: false });
+      }
+
       if (!passwordValidateUsername) {
         return res
           .status(401)
           .json({ message: "Email atau password salah!pass", status: false });
       }
+      console.log("p")
       payload = {
         id: username.id,
         role: username.role,
-        refreshToken: email.refreshToken,
+        refreshToken: username.refreshToken,
       };
+
     } else {
       return res.status(401).json({
         message: "Email atau password salah! Username/pass",
