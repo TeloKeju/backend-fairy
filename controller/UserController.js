@@ -1,6 +1,7 @@
 import User from '../Models/UserModel.js';
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken";
+import { env } from "process";
 
 export const getHistory = (req, res) => {
 
@@ -78,10 +79,11 @@ export const createUser = async (req, res) => {
         const salt = await bcrypt.genSalt();
         const hashPassword = await bcrypt.hash(req.body.password, salt)
         req.body.password = hashPassword
+        req.body.refreshToken = jwt.sign(req.body.nama, env.JWT_REFRESH_SECRET);
         await User.create(req.body)
-        console.log("UNINNININ")
         return res.status(200).json({ message: "User berhasil dibuat!" })
     } catch (err) {
+        console.log(err)
         return res.status(500).json({ message: err.message })
     }
 

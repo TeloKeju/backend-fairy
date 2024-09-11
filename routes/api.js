@@ -71,7 +71,7 @@ import {
 const router = express.Router();
 
 router.get("/api/profile/:token", profile);
-router.post("/api/profile/update/:token", updateProfile);
+router.post("/api/profile/update/:id", accessValidation, updateProfile);
 router.get("/api/users/:id", accessValidation, getUserByID);
 router.get("/api/users", accessValidation, getUser);
 router.post("/api/users", accessValidation, createUser);
@@ -160,8 +160,8 @@ router.get("/api/get-quiz/:id", accessValidation, getQuizById);
 router.get("/api/get-rekap/:id_forum", getRekapByForumId);
 
 // Join Forum
-router.post("/api/join-forum",accessValidation, joinForumByToken);
-router.post("/api/update-nilai-quiz",accessValidation, updateNilaiQuiz);
+router.post("/api/join-forum", accessValidation, joinForumByToken);
+router.post("/api/update-nilai-quiz", accessValidation, updateNilaiQuiz);
 router.get(
   "/api/get-forum-by-userid/:id_user",
   accessValidation,

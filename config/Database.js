@@ -1,6 +1,6 @@
 import { Sequelize } from "sequelize";
 
-const db = new Sequelize("dongeng", "root", "", {
+const db = new Sequelize("split", "root", "", {
     host: "localhost",
     dialect: "mysql"
 })

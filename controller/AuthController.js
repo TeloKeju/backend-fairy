@@ -7,14 +7,15 @@ import { env } from "process";
 
 export const updateProfile = async (req, res) => {
   try {
-    const { token } = req.params;
-    const { id } = jwt.verify(token, process.env.JWT_SECRET);
+    const { id } = req.params;
+    // const { id } = jwt.verify(token, process.env.JWT_SECRET);
     await User.update(req.body, { where: { id } });
     return res.status(200).json({ message: "Berhasil mengupdate profile" });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 };
+
 export const validJWT = (req, res) => {
   try {
     const { token } = req.params;
